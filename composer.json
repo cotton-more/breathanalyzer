@@ -1,0 +1,19 @@
+{
+    "name": "inikulin/breathanalyzer",
+    "description": "Test case for Datanalyze",
+    "require": {
+        "symfony/console": "^3.1"
+    },
+    "license": "NLPL",
+    "authors": [
+        {
+            "name": "Ivan Nikulin",
+            "email": "vansanblch@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Breathanalyzer\\": "src/"
+        }
+    }
+}
