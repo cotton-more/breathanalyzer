@@ -42,7 +42,7 @@ class DataScoring extends Command
         $this->buildVocabulary();
 
         $filename = $input->getArgument('filename');
-        $words = preg_split('/\s+/', file_get_contents($filename));
+        $words = preg_split('/\s+/', trim(file_get_contents($filename)));
 
         $progress = new ProgressBar($output, count($words));
         $progress->setFormat('very_verbose');
