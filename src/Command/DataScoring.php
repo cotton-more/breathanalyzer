@@ -6,10 +6,13 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
+use Symfony\Component\Console\Helper\ProgressBar;
 
 class DataScoring extends Command
 {
     private $vocabulary;
+
+    private $words = array();
 
     protected function configure()
     {
@@ -38,10 +41,52 @@ class DataScoring extends Command
     {
         $this->buildVocabulary();
 
-        var_dump($this->vocabulary);
-
         $filename = $input->getArgument('filename');
-        $srcText = file_get_contents($filename);
+        $words = preg_split('/\s+/', file_get_contents($filename));
+
+        $progress = new ProgressBar($output, count($words));
+        $progress->setFormat('very_verbose');
+        $progress->start();
+
+        $totalScore = 0;
+        foreach ($words as $word) {
+            $totalScore += $this->getWordScore($word);
+            $progress->advance();
+        }
+
+        $progress->finish();
+
+        $output->writeln('');
+        $output->writeln('<info>'.$totalScore.'</info>');
+    }
+
+    private function getWordScore($word)
+    {
+        $word = mb_strtoupper($word);
+        if (array_key_exists($word, $this->words)) {
+            return $this->words[$word];
+        }
+
+        if (in_array($word, $this->vocabulary)) {
+            return $this->words[$word] = 0;
+        }
+
+        $minimumScore = 1;
+        $score = null;
+
+        foreach ($this->vocabulary as $vocabulary) {
+            $wordScore = levenshtein($word, $vocabulary);
+            if ($wordScore === $minimumScore) {
+                $score = $wordScore;
+                break;
+            } else {
+                if ($wordScore < $score || null === $score) {
+                    $score = $wordScore;
+                }
+            }
+        }
+
+        return $this->words[$word] = $score;
     }
 
     private function buildVocabulary()
