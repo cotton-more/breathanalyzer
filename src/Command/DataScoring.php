@@ -11,6 +11,7 @@ use Symfony\Component\Console\Helper\ProgressBar;
 class DataScoring extends Command
 {
     private $vocabulary;
+    private $vocabularyByLength;
 
     private $words = array();
 
@@ -74,14 +75,41 @@ class DataScoring extends Command
         $minimumScore = 1;
         $score = null;
 
-        foreach ($this->vocabulary as $vocabulary) {
-            $wordScore = levenshtein($word, $vocabulary);
-            if ($wordScore === $minimumScore) {
-                $score = $wordScore;
-                break;
-            } else {
-                if ($wordScore < $score || null === $score) {
+        $lenght = mb_strlen($word);
+
+        // try to get same length words
+        if (array_key_exists($lenght, $this->vocabularyByLength)) {
+            foreach ($this->vocabularyByLength[$lenght] as $vocabulary) {
+                $wordScore = levenshtein($word, $vocabulary);
+                if ($wordScore === $minimumScore) {
                     $score = $wordScore;
+                    break;
+                } else {
+                    if ($wordScore < $score || null === $score) {
+                        $score = $wordScore;
+                    }
+                }
+            }
+        }
+
+        if ($minimumScore === $score) {
+            return $this->words[$word] = $minimumScore;
+        }
+
+        // check the rest of the words
+        foreach ($this->vocabularyByLength as $vocabularyLength => $vocabularyWords) {
+            if ($lenght === $vocabularyLength) {
+                continue;
+            }
+            foreach ($vocabularyWords as $vocabulary) {
+                $wordScore = levenshtein($word, $vocabulary);
+                if ($wordScore === $minimumScore) {
+                    $score = $wordScore;
+                    break;
+                } else {
+                    if ($wordScore < $score || null === $score) {
+                        $score = $wordScore;
+                    }
                 }
             }
         }
@@ -92,5 +120,9 @@ class DataScoring extends Command
     private function buildVocabulary()
     {
         $this->vocabulary = file(realpath(__DIR__.'/../../data/vocabulary.txt'), FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+        foreach ($this->vocabulary as $word) {
+            $this->vocabularyByLength[mb_strlen($word)][] = $word;
+        }
     }
 }
