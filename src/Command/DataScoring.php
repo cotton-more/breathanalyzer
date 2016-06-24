@@ -85,11 +85,14 @@ class DataScoring extends Command
             return $this->words[$word] = 0;
         }
 
-        $minimumScore = 1;
         $score = null;
 
         $lengths = $this->suggestWordLengths($word);
         foreach ($lengths as $vocabularyLength => $_) {
+            $minimumScore = abs($vocabularyLength - mb_strlen($word));
+            if (0 === $minimumScore) {
+                $minimumScore = 1;
+            }
             foreach ($this->vocabularyByLength[$vocabularyLength] as $vocabulary) {
                 $wordScore = levenshtein($word, $vocabulary);
                 if ($wordScore === $minimumScore) {
